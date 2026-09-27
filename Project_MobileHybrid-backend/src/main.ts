@@ -11,10 +11,8 @@ let cachedServer: any;
 async function createApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Trust proxy for rate limiting and X-Forwarded-For headers
   app.set('trust proxy', 1);
 
-  // Enable CORS FIRST before any middleware
   app.enableCors({
     origin:
       process.env.NODE_ENV === 'production'
@@ -29,20 +27,19 @@ async function createApp(): Promise<NestExpressApplication> {
     optionsSuccessStatus: 200,
   });
 
-  // Apply rate limiting
   app.use('/auth', authLimiter);
   app.use(apiLimiter);
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads/',
-  });
+  app.useStaticAssets(
+  process.env.VERCEL ? '/tmp' : join(__dirname, '..', 'uploads'),
+  { prefix: '/uploads/' },
+);
 
   return app;
 }
 
-// Local development startup
 if (!process.env.VERCEL) {
   createApp()
     .then(async (app) => {
@@ -59,7 +56,6 @@ if (!process.env.VERCEL) {
     });
 }
 
-// Vercel Serverless handler export
 export default async function handler(req: any, res: any) {
   if (!cachedServer) {
     const app = await createApp();

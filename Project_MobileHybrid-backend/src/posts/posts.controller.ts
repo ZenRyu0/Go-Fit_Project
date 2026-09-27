@@ -6,9 +6,11 @@ import { PostsService } from './posts.service';
 import { CreatePostDto, AddCommentDto } from './dto/post.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+
 @Controller('posts')
 export class PostsController {
   constructor(private postsService: PostsService) {}
+
   @Get('feed')
   @UseGuards(JwtAuthGuard)
   async getFeed(
@@ -26,23 +28,30 @@ export class PostsController {
       data: feedData,
     };
   }
+
   @Post()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', {
-     storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
-      }
-    })
-  }))
-  async createPost(@CurrentUser() user: any, @Body() createPostDto: CreatePostDto,
-    @UploadedFile() file?: Express.Multer.File
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: process.env.VERCEL ? '/tmp' : './uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
+  async createPost(
+    @CurrentUser() user: any,
+    @Body() createPostDto: CreatePostDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     if (file) {
       const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-      const host = process.env.FILE_UPLOAD_HOST || 'localhost:3000';
+      const host =
+        process.env.FILE_UPLOAD_HOST ||
+        (process.env.NODE_ENV === 'production' ? 'go-fit-project.vercel.app' : 'localhost:3000');
       createPostDto.imageUrl = `${protocol}://${host}/uploads/${file.filename}`;
     }
     const post = await this.postsService.createPost(user.id, createPostDto);
@@ -52,6 +61,7 @@ export class PostsController {
       data: post,
     };
   }
+
   @Get(':id')
   async getPostById(@Param('id') id: string) {
     const post = await this.postsService.getPostById(id);
@@ -60,6 +70,7 @@ export class PostsController {
       data: post,
     };
   }
+
   @Post(':id/like')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
@@ -70,6 +81,7 @@ export class PostsController {
       data: post,
     };
   }
+
   @Post(':id/unlike')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
@@ -80,6 +92,7 @@ export class PostsController {
       data: post,
     };
   }
+
   @Post(':id/save')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
@@ -90,6 +103,7 @@ export class PostsController {
       data: post,
     };
   }
+
   @Post(':id/unsave')
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
@@ -100,6 +114,7 @@ export class PostsController {
       data: post,
     };
   }
+
   @Post(':id/comments')
   @UseGuards(JwtAuthGuard)
   async addComment(
@@ -113,6 +128,7 @@ export class PostsController {
       data: comment,
     };
   }
+
   @Get(':id/comments')
   async getPostComments(@Param('id') postId: string) {
     const comments = await this.postsService.getPostComments(postId);
@@ -121,6 +137,7 @@ export class PostsController {
       data: comments,
     };
   }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   async deletePost(@CurrentUser() user: any, @Param('id') id: string) {
@@ -130,6 +147,7 @@ export class PostsController {
       message: 'Post deleted successfully',
     };
   }
+
   @Delete(':id/comments/:commentId')
   @UseGuards(JwtAuthGuard)
   async deleteComment(@CurrentUser() user: any, @Param('commentId') commentId: string) {
