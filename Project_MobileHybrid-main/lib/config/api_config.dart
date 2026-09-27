@@ -7,11 +7,11 @@ class ApiConfig {
     if (envUrl.isNotEmpty) return envUrl;
 
     if (kIsWeb) {
-      return 'http://localhost:3000';
+      return 'https://go-fit-project.vercel.app';
     } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000';
+      return 'https://go-fit-project.vercel.app';
     } else {
-      return 'http://localhost:3000';
+      return 'https://go-fit-project.vercel.app';
     }
   }
 
