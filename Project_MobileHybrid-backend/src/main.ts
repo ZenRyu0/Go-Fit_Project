@@ -14,14 +14,7 @@ async function createApp(): Promise<NestExpressApplication> {
   app.set('trust proxy', 1);
 
   app.enableCors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? [
-            'https://letsgo-fit.netlify.app',
-            'https://go-fit-frontend.netlify.app',
-            'https://gofit.netlify.app',
-          ]
-        : '*',
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 200,
@@ -33,9 +26,9 @@ async function createApp(): Promise<NestExpressApplication> {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   app.useStaticAssets(
-  process.env.VERCEL ? '/tmp' : join(__dirname, '..', 'uploads'),
-  { prefix: '/uploads/' },
-);
+    process.env.VERCEL ? '/tmp' : join(__dirname, '..', 'uploads'),
+    { prefix: '/uploads/' },
+  );
 
   return app;
 }
