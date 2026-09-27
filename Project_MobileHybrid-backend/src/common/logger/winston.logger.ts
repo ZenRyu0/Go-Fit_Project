@@ -1,5 +1,4 @@
 import * as winston from 'winston';
-import * as path from 'path';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -15,41 +14,16 @@ const customFormat = winston.format.combine(
   }),
 );
 
-const transports: winston.transport[] = [
-  new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      customFormat,
-    ),
-  }),
-];
-
-if (!isDev) {
-  transports.push(
-    new winston.transports.File({
-      filename: path.join('logs', 'error.log'),
-      level: 'error',
-      format: customFormat,
-      maxsize: 5242880,
-      maxFiles: 5,
-    }),
-    new winston.transports.File({
-      filename: path.join('logs', 'combined.log'),
-      format: customFormat,
-      maxsize: 5242880,
-      maxFiles: 5,
-    }),
-  );
-}
+const consoleTransport = new winston.transports.Console({
+  format: winston.format.combine(
+    winston.format.colorize(),
+    customFormat,
+  ),
+});
 
 export const logger = winston.createLogger({
   level: isDev ? 'debug' : 'info',
   format: customFormat,
-  transports,
-  exceptionHandlers: [
-    new winston.transports.File({
-      filename: path.join('logs', 'exceptions.log'),
-      format: customFormat,
-    }),
-  ],
+  transports: [consoleTransport],
+  exceptionHandlers: [consoleTransport],
 });
